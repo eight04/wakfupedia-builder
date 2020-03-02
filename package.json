@@ -1,0 +1,46 @@
+{
+  "name": "wakfupedia-builder",
+  "version": "0.0.0",
+  "description": "A userscript that extends Wakfu Encyclopedia with a simple builder.",
+  "author": "eight04 <eight04@gmail.com>",
+  "license": "MIT",
+  "dependencies": {},
+  "scripts": {
+    "test": "eslint \"**/*.js\" --cache",
+    "preversion": "npm test",
+    "version": "npm run build && git add .",
+    "build": "rollup -c",
+    "postversion": "git push --follow-tags"
+  },
+  "eslintIgnore": [
+    "dist"
+  ],
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "rollup": "^1.32.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-svelte": "^5.1.1",
+    "svelte": "^3.19.1",
+    "userscript-meta-cli": "^0.4.2"
+  },
+  "repository": "eight04/wakfupedia-builder",
+  "files": [
+    "dist"
+  ],
+  "private": "true",
+  "userscript": {
+    "name": "Wakfupedia Builder",
+    "match": [
+      "https://www.wakfu.com/en/mmorpg/encyclopedia/*",
+      "https://www.wakfu.com/en/search?*"
+    ],
+    "grant": [
+      "GM_getValue",
+      "GM_setValue",
+      "GM_addValueChangeListener",
+      "GM.getValue",
+      "GM.setValue"
+    ],
+    "run-at": "document-end"
+  }
+}
