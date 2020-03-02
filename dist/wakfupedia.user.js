@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name Wakfupedia Builder
-// @version 0.0.0
+// @version 0.1.0
 // @description A userscript that extends Wakfu Encyclopedia with a simple builder.
 // @license MIT
 // @author eight04 <eight04@gmail.com>
