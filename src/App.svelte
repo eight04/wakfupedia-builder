@@ -139,7 +139,7 @@ function dragUpdate(e) {
       Wakfupedia Builder
     </div>
     <div class="builder-set-list">
-      <select name="" id="" class="builder-set-select" on:change={updateSelectedSet} bind:this={setSelectEl}>
+      <select class="builder-set-select" on:change={updateSelectedSet} bind:this={setSelectEl}>
         <optgroup label="Sets">
           {#each $setList as name}
             <option value="{name}">{name}</option>
