@@ -30,6 +30,7 @@
   "private": "true",
   "userscript": {
     "name": "Wakfupedia Builder",
+    "namespace": "https://greasyfork.org/users/813",
     "match": [
       "https://www.wakfu.com/en/mmorpg/encyclopedia/*",
       "https://www.wakfu.com/en/search?*"
