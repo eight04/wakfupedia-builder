@@ -53,9 +53,9 @@ function createItemList() {
     const idx = items.findIndex(i => i.id === itemId);
     if (idx < 0) {
       console.warn(`cannot find item ${itemId}`);
-    } else {
-      items.splice(idx, 1);
+      return;
     }
+    items.splice(idx, 1);
     await rawList.set(items);
   }
 }
