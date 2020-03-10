@@ -12,8 +12,19 @@ Installation
 
 [Greasy Fork](https://greasyfork.org/en/scripts/397194-wakfupedia-builder)
 
+Limitation
+----------
+
+This script collects data from item's page. It doesn't know the set effect.
+
 Changelog
 ---------
+
+* 0.2.0 (Mar 10, 2020)
+
+  - Fix: error with negative numbers.
+  - Add: support multiple builds.
+  - Add: the builder window is now draggable.
 
 * 0.1.0 (Mar 2, 2020)
 
