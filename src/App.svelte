@@ -142,7 +142,7 @@ function dragUpdate(e) {
       <select class="builder-set-select" on:change={updateSelectedSet} bind:this={setSelectEl}>
         <optgroup label="Sets">
           {#each $setList as name}
-            <option value="{name}">{name}</option>
+            <option value={name}>{name}</option>
           {/each}
         </optgroup>
         <optgroup label="Actions">

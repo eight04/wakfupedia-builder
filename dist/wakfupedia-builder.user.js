@@ -11,6 +11,7 @@
 // @grant GM_getValue
 // @grant GM_setValue
 // @grant GM_addValueChangeListener
+// @grant GM_removeValueChangeListener
 // @grant GM.getValue
 // @grant GM.setValue
 // @run-at document-end
@@ -846,8 +847,6 @@ function create_fragment(ctx) {
 			option1.value = option1.__value;
 			option1.disabled = option1_disabled_value = /*$currentSet*/ ctx[3] === "DEFAULT";
 			attr(optgroup1, "label", "Actions");
-			attr(select, "name", "");
-			attr(select, "id", "");
 			attr(select, "class", "builder-set-select svelte-z2h4wy");
 			attr(div1, "class", "builder-set-list");
 			attr(div2, "class", "builder-issue svelte-z2h4wy");
