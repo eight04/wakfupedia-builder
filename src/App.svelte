@@ -1,10 +1,45 @@
 <script>
-import {onMount} from "svelte";
+import {afterUpdate} from "svelte";
 
-export let items;
-$: ({list, summary, buildSetIssue, remove} = items || {});
+import {itemList, summary, buildSetIssue} from "./items.js";
+import {setList, currentSet, addSet, removeSet} from "./set-list.js";
 
-let container;
+let setSelectEl;
+afterUpdate(() => {
+  if (!setSelectEl) return;
+  
+  setSelectEl.value = $currentSet;  
+});
+$: {
+  if (setSelectEl) {
+    setSelectEl.value = $currentSet;
+  }
+}
+
+const selectActions = {
+  _NEW_: async () => {
+    const newSet = prompt("Name of the new set");
+    if (!newSet) {
+      return;
+    }
+    await addSet(newSet);
+  },
+  _DELETE_: async () => {
+    await removeSet($currentSet);
+  }
+}
+
+async function updateSelectedSet() {
+  const action = selectActions[setSelectEl.value];
+  if (action) {
+    setSelectEl.value = $currentSet;
+    await action();
+    return;
+  }
+  
+  currentSet.set(setSelectEl.value);
+}
+
 let builderTop = 36;
 let builderRight = 36;
 let dragging = false;
@@ -14,9 +49,6 @@ let initPos;
 Promise.all([
   GM.getValue("builder/window/top", 36),
   GM.getValue("builder/window/right", 36),
-  new Promise(resolve => {
-    onMount(resolve);
-  })
 ])
   .then(([top, right]) => {
     builderTop = top;
@@ -66,6 +98,11 @@ function dragUpdate(e) {
   cursor: move;
 }
 
+.builder-set-select {
+  display: block;
+  width: 100%;
+}
+
 .builder-issue {
   padding: 6px;
   background: pink;
@@ -96,10 +133,23 @@ function dragUpdate(e) {
 
 <svelte:window on:mouseup={dragEnd} on:mousemove={dragUpdate} />
 
-<div class="builder-container" bind:this={container} style="top: {builderTop}px; right: {builderRight}px;">
+<div class="builder-container" style="top: {builderTop}px; right: {builderRight}px;">
   <div class="builder-nav">
     <div class="builder-title" on:mousedown={dragStart}>
       Wakfupedia Builder
+    </div>
+    <div class="builder-set-list">
+      <select name="" id="" class="builder-set-select" on:change={updateSelectedSet} bind:this={setSelectEl}>
+        <optgroup label="Sets">
+          {#each $setList as name}
+            <option value="{name}">{name}</option>
+          {/each}
+        </optgroup>
+        <optgroup label="Actions">
+          <option value="_NEW_">Add a new set</option>
+          <option value="_DELETE_" disabled={$currentSet === "DEFAULT"}>Delete current set</option>
+        </optgroup>
+      </select>
     </div>
     <div class="builder-issue" hidden={!$buildSetIssue}>
       {$buildSetIssue}
@@ -107,10 +157,10 @@ function dragUpdate(e) {
   </div>
   <div class="builder-content">
     <div class="builder-items">
-      {#each $list as item}
+      {#each $itemList as item}
         <img src={item.icon} alt="">
         <a class="builder-item-name" href={item.url}>{item.name}</a>
-        <button class="builder-item-remove" type="button" on:click={() => remove(item.id)}>
+        <button class="builder-item-remove" type="button" on:click={() => itemList.remove(item.id)}>
           &cross;
         </button>
       {/each}
