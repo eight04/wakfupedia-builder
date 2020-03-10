@@ -29,7 +29,7 @@ export function createStore(key, value) {
   }
   
   async function get() {
-    // FIXM: can we just return `value`?
+    // FIXME: can we just return `value`?
     const newValue = await GM.getValue(key);
     return newValue == null ? value : newValue;
   }
