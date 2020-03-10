@@ -38,6 +38,7 @@
       "GM_getValue",
       "GM_setValue",
       "GM_addValueChangeListener",
+      "GM_removeValueChangeListener",
       "GM.getValue",
       "GM.setValue"
     ],
