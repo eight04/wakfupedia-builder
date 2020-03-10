@@ -437,7 +437,7 @@ function createStore(key, value) {
   }
   
   async function get() {
-    // FIXM: can we just return `value`?
+    // FIXME: can we just return `value`?
     const newValue = await GM.getValue(key);
     return newValue == null ? value : newValue;
   }
@@ -529,9 +529,9 @@ function createItemList() {
     const idx = items.findIndex(i => i.id === itemId);
     if (idx < 0) {
       console.warn(`cannot find item ${itemId}`);
-    } else {
-      items.splice(idx, 1);
+      return;
     }
+    items.splice(idx, 1);
     await rawList.set(items);
   }
 }
@@ -586,7 +586,7 @@ function getCurrentItem() {
     if (!/Characteristics/i.test(title.textContent)) continue;
     for (const el of title.nextElementSibling.querySelectorAll(".show .ak-title")) {
       const text = el.textContent.trim();
-      const match = text.match(/^(\d+)%?\s+(.+)/);
+      const match = text.match(/^(-?\d+(?:\.\d+)?)%?\s+(.+)/);
       stats.push([match[2], Number(match[1])]);
     }
   }
