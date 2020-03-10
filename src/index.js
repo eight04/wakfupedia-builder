@@ -2,19 +2,12 @@
 
 import App from "./App.svelte";
 import Button from "./Button.svelte";
-import {getCurrentItem, createItemStore} from "./items.js";
-
-const items = createItemStore();
+import {getCurrentItem, itemList} from "./items.js";
 
 const container = document.createElement("div");
 document.body.appendChild(container);
 
-new App({
-  target: container,
-  props: {
-    items
-  }
-});
+new App({target: container});
 
 if (getCurrentItem()) {
   const buttonContainer = document.createElement("span");
@@ -22,6 +15,6 @@ if (getCurrentItem()) {
   el.parentNode.insertBefore(buttonContainer, el.nextSibling);
   const button = new Button({target: buttonContainer});
   button.$on("addItem", () => {
-    items.add(getCurrentItem());
+    itemList.add(getCurrentItem());
   });
 }

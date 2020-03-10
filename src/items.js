@@ -1,90 +1,100 @@
 /* eslint-env browser, greasemonkey */
-/* global GM_addValueChangeListener */
 
-import {writable, derived} from "svelte/store";
+import {derived} from "svelte/store";
 
-export function createItemStore() {
-  const list = writable([]);
-  const buildSetIssue = derived(list, verifyBuildSet);
-  const summary = derived(list, getSummary);
-  let currentBuild;
-  const ready = prepare();
-  return {list, buildSetIssue, add, remove, summary};
+import {currentSet} from "./set-list.js";
+import {createStore} from "./gm-store.js";
+
+export const itemList = createItemList();
+
+function createItemList() {
+  const listeners = new Set;
+  let setName = "DEFAULT";
+  let rawList;
+  updateRawList();
   
-  function getSummary(items) {
-    if (!items) return [];
-    const summary = new Map;
-    for (const item of items) {
-      for (const [name, value] of item.stats) {
-        summary.set(name, (summary.get(name) || 0) + value);
-      }
+  currentSet.subscribe(newSetName => {
+    // console.log("new set name", newSetName);
+    if (setName === newSetName) return;
+    setName = newSetName;
+    updateRawList();
+  });
+  
+  return {subscribe, add, remove};
+  
+  function updateRawList() {
+    if (rawList) {
+      rawList.destroy();
     }
-    return [...summary.entries()];
+    rawList = createStore(`build/items/${setName}`, []);
+    rawList.subscribe(emitChange);
   }
   
-  function verifyBuildSet(items) {
-    if (!items) return;
-    const count = {};
-    const unique = new Set;
-    for (const item of items) {
-      if (unique.has(item.id)) {
-        return `Duplicate item: ${item.name}`;
-      }
-      unique.add(item.id);
-      
-      count[item.type] = count[item.type] ? count[item.type] + 1 : 1;
-      if (
-        count[item.type] > 1 && item.type !== "ring" ||
-        count[item.type] > 2
-      ) {
-        return `Too many ${item.type}`;
-      }
-    }
+  function subscribe(callback) {
+    listeners.add(callback);
+    callback(rawList.current());
+    return () => listeners.remove(callback);
   }
   
-  async function prepare() {
-    currentBuild = await GM.getValue("build/current-build", "DEFAULT");
-    list.set(await GM.getValue(`build/items/${currentBuild}`));
-    
-    if (typeof GM_addValueChangeListener === "function") {
-      GM_addValueChangeListener(`build/items/${currentBuild}`, (name, oldValue, newValue, remote) => {
-        if (remote) {
-          list.set(newValue);
-        }
-      });
+  function emitChange() {
+    for (const callback of listeners) {
+      callback(rawList.current());
     }
   }
   
-  async function add(newItem) {
-    await ready;
-    let pending;
-    list.update(items => {
-      if (!items) items = [];
-      items.push(newItem);
-      pending = GM.setValue(`build/items/${currentBuild}`, items);
-      return items;
-    });
-    await pending;
+  async function add(item) {
+    const items = await rawList.get();
+    items.push(item);
+    await rawList.set(items);
   }
   
   async function remove(itemId) {
-    await ready;
-    let pending;
-    list.update(items => {
-      if (!items) items = [];
-      const idx = items.findIndex(i => i.id === itemId);
-      if (idx < 0) {
-        console.warn(`cannot find item ${itemId}`);
-      } else {
-        items.splice(idx, 1);
-      }
-      pending = GM.setValue(`build/items/${currentBuild}`, items);
-      return items;
-    });
-    return pending;
+    const items = await rawList.get();
+    const idx = items.findIndex(i => i.id === itemId);
+    if (idx < 0) {
+      console.warn(`cannot find item ${itemId}`);
+      return;
+    }
+    items.splice(idx, 1);
+    await rawList.set(items);
   }
 }
 
+export const buildSetIssue = derived(itemList, verifyBuildSet);
+
+export const summary = derived(itemList, getSummary);
+
+function getSummary(items) {
+  if (!items) return [];
+  const summary = new Map;
+  for (const item of items) {
+    for (const [name, value] of item.stats) {
+      summary.set(name, (summary.get(name) || 0) + value);
+    }
+  }
+  return [...summary.entries()];
+}
+  
+function verifyBuildSet(items) {
+  if (!items) return;
+  const count = {};
+  const unique = new Set;
+  for (const item of items) {
+    if (unique.has(item.id)) {
+      return `Duplicate item: ${item.name}`;
+    }
+    unique.add(item.id);
+    
+    count[item.type] = count[item.type] ? count[item.type] + 1 : 1;
+    if (
+      count[item.type] > 1 && item.type !== "ring" ||
+      count[item.type] > 2
+    ) {
+      return `Too many ${item.type}`;
+    }
+  }
+}
+  
 export function getCurrentItem() {
   const match = location.href.match(/encyclopedia\/\w+\/(\d+)[\w-]*/);
   if (!match) return;
@@ -100,7 +110,7 @@ export function getCurrentItem() {
     if (!/Characteristics/i.test(title.textContent)) continue;
     for (const el of title.nextElementSibling.querySelectorAll(".show .ak-title")) {
       const text = el.textContent.trim();
-      const match = text.match(/^(\d+)%?\s+(.+)/);
+      const match = text.match(/^(-?\d+(?:\.\d+)?)%?\s+(.+)/);
       stats.push([match[2], Number(match[1])]);
     }
   }
