@@ -5,6 +5,11 @@ export let items;
 $: ({list, summary, buildSetIssue, remove} = items || {});
 
 let container;
+let builderTop = 36;
+let builderRight = 36;
+let dragging = false;
+let initDragPos;
+let initPos;
 
 Promise.all([
   GM.getValue("builder/window/top", 36),
@@ -14,17 +19,35 @@ Promise.all([
   })
 ])
   .then(([top, right]) => {
-    container.style.setProperty("--builder-top", top);
-    container.style.setProperty("--builder-right", right);
+    builderTop = top;
+    builderRight = right;
   });
+  
+function dragStart(e) {
+  initDragPos = {x: e.screenX, y: e.screenY};
+  initPos = {top: builderTop, right: builderRight};
+  dragging = true;
+  e.preventDefault();
+}
+
+function dragEnd() {
+  dragging = false;
+  GM.setValue("builder/window/top", builderTop);
+  GM.setValue("builder/window/right", builderRight);
+}
+
+function dragUpdate(e) {
+  if (!dragging) return;
+  
+  builderTop = initPos.top + e.screenY - initDragPos.y;
+  builderRight = initPos.right - (e.screenX - initDragPos.x);
+}
 </script>
 
 <style>
 .builder-container {
   position: fixed;
   background: white;
-  top: calc(var(--builder-top, 36) * 1px);
-  right: calc(var(--builder-right, 36) * 1px);
   z-index: 999999;
   max-height: calc(100% - 72px);
   box-shadow: 3px 3px 1.5rem black;
@@ -40,6 +63,7 @@ Promise.all([
   font-family: "bebas_neueregular", sans-serif;
   font-size: 2.4rem;
   text-transform: uppercase;
+  cursor: move;
 }
 
 .builder-issue {
@@ -70,9 +94,11 @@ Promise.all([
 }
 </style>
 
-<div class="builder-container" bind:this={container}>
+<svelte:window on:mouseup={dragEnd} on:mousemove={dragUpdate} />
+
+<div class="builder-container" bind:this={container} style="top: {builderTop}px; right: {builderRight}px;">
   <div class="builder-nav">
-    <div class="builder-title">
+    <div class="builder-title" on:mousedown={dragStart}>
       Wakfupedia Builder
     </div>
     <div class="builder-issue" hidden={!$buildSetIssue}>

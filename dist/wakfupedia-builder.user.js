@@ -82,6 +82,9 @@ function set_data(text, data) {
     if (text.data !== data)
         text.data = data;
 }
+function set_style(node, key, value, important) {
+    node.style.setProperty(key, value, important ? 'important' : '');
+}
 function custom_event(type, detail) {
     const e = document.createEvent('CustomEvent');
     e.initCustomEvent(type, false, false, detail);
@@ -300,31 +303,31 @@ class SvelteComponent {
 
 function add_css() {
 	var style = element("style");
-	style.id = "svelte-adzsde-style";
-	style.textContent = ".builder-container.svelte-adzsde.svelte-adzsde{position:fixed;background:white;top:calc(var(--builder-top, 36) * 1px);right:calc(var(--builder-right, 36) * 1px);z-index:999999;max-height:calc(100% - 72px);box-shadow:3px 3px 1.5rem black;display:grid;grid-template-rows:min-content 1fr}.builder-title.svelte-adzsde.svelte-adzsde{background:#40b2b5;text-shadow:0 2px 2px rgba(0,0,0,0.1);color:white;padding:3px 12px;font-family:\"bebas_neueregular\", sans-serif;font-size:2.4rem;text-transform:uppercase}.builder-issue.svelte-adzsde.svelte-adzsde{padding:6px;background:pink;color:red}.builder-content.svelte-adzsde.svelte-adzsde{overflow:auto}.builder-items.svelte-adzsde.svelte-adzsde{display:grid;grid-template-columns:min-content 1fr min-content;align-items:center;border-bottom:1px solid #e4e4e4}.builder-items.svelte-adzsde img.svelte-adzsde{margin:3px}.builder-items.svelte-adzsde .builder-item-remove.svelte-adzsde{margin:6px}.builder-summary.svelte-adzsde.svelte-adzsde{padding:6px}";
+	style.id = "svelte-16nqpzd-style";
+	style.textContent = ".builder-container.svelte-16nqpzd.svelte-16nqpzd{position:fixed;background:white;z-index:999999;max-height:calc(100% - 72px);box-shadow:3px 3px 1.5rem black;display:grid;grid-template-rows:min-content 1fr}.builder-title.svelte-16nqpzd.svelte-16nqpzd{background:#40b2b5;text-shadow:0 2px 2px rgba(0,0,0,0.1);color:white;padding:3px 12px;font-family:\"bebas_neueregular\", sans-serif;font-size:2.4rem;text-transform:uppercase;cursor:move}.builder-issue.svelte-16nqpzd.svelte-16nqpzd{padding:6px;background:pink;color:red}.builder-content.svelte-16nqpzd.svelte-16nqpzd{overflow:auto}.builder-items.svelte-16nqpzd.svelte-16nqpzd{display:grid;grid-template-columns:min-content 1fr min-content;align-items:center;border-bottom:1px solid #e4e4e4}.builder-items.svelte-16nqpzd img.svelte-16nqpzd{margin:3px}.builder-items.svelte-16nqpzd .builder-item-remove.svelte-16nqpzd{margin:6px}.builder-summary.svelte-16nqpzd.svelte-16nqpzd{padding:6px}";
 	append(document.head, style);
 }
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[11] = list[i][0];
-	child_ctx[12] = list[i][1];
+	child_ctx[19] = list[i][0];
+	child_ctx[20] = list[i][1];
 	return child_ctx;
 }
 
 function get_each_context_1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[15] = list[i];
+	child_ctx[23] = list[i];
 	return child_ctx;
 }
 
-// (84:6) {#each $list as item}
+// (110:6) {#each $list as item}
 function create_each_block_1(ctx) {
 	let img;
 	let img_src_value;
 	let t0;
 	let a;
-	let t1_value = /*item*/ ctx[15].name + "";
+	let t1_value = /*item*/ ctx[23].name + "";
 	let t1;
 	let a_href_value;
 	let t2;
@@ -332,7 +335,7 @@ function create_each_block_1(ctx) {
 	let dispose;
 
 	function click_handler(...args) {
-		return /*click_handler*/ ctx[9](/*item*/ ctx[15], ...args);
+		return /*click_handler*/ ctx[17](/*item*/ ctx[23], ...args);
 	}
 
 	return {
@@ -344,12 +347,12 @@ function create_each_block_1(ctx) {
 			t2 = space();
 			button = element("button");
 			button.textContent = "✗\r\n        ";
-			if (img.src !== (img_src_value = /*item*/ ctx[15].icon)) attr(img, "src", img_src_value);
+			if (img.src !== (img_src_value = /*item*/ ctx[23].icon)) attr(img, "src", img_src_value);
 			attr(img, "alt", "");
-			attr(img, "class", "svelte-adzsde");
+			attr(img, "class", "svelte-16nqpzd");
 			attr(a, "class", "builder-item-name");
-			attr(a, "href", a_href_value = /*item*/ ctx[15].url);
-			attr(button, "class", "builder-item-remove svelte-adzsde");
+			attr(a, "href", a_href_value = /*item*/ ctx[23].url);
+			attr(button, "class", "builder-item-remove svelte-16nqpzd");
 			attr(button, "type", "button");
 		},
 		m(target, anchor) {
@@ -364,13 +367,13 @@ function create_each_block_1(ctx) {
 		p(new_ctx, dirty) {
 			ctx = new_ctx;
 
-			if (dirty & /*$list*/ 64 && img.src !== (img_src_value = /*item*/ ctx[15].icon)) {
+			if (dirty & /*$list*/ 256 && img.src !== (img_src_value = /*item*/ ctx[23].icon)) {
 				attr(img, "src", img_src_value);
 			}
 
-			if (dirty & /*$list*/ 64 && t1_value !== (t1_value = /*item*/ ctx[15].name + "")) set_data(t1, t1_value);
+			if (dirty & /*$list*/ 256 && t1_value !== (t1_value = /*item*/ ctx[23].name + "")) set_data(t1, t1_value);
 
-			if (dirty & /*$list*/ 64 && a_href_value !== (a_href_value = /*item*/ ctx[15].url)) {
+			if (dirty & /*$list*/ 256 && a_href_value !== (a_href_value = /*item*/ ctx[23].url)) {
 				attr(a, "href", a_href_value);
 			}
 		},
@@ -385,13 +388,13 @@ function create_each_block_1(ctx) {
 	};
 }
 
-// (93:6) {#each $summary as [name, value]}
+// (119:6) {#each $summary as [name, value]}
 function create_each_block(ctx) {
 	let div;
-	let t0_value = /*value*/ ctx[12] + "";
+	let t0_value = /*value*/ ctx[20] + "";
 	let t0;
 	let t1;
-	let t2_value = /*name*/ ctx[11] + "";
+	let t2_value = /*name*/ ctx[19] + "";
 	let t2;
 	let t3;
 
@@ -412,8 +415,8 @@ function create_each_block(ctx) {
 			append(div, t3);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*$summary*/ 128 && t0_value !== (t0_value = /*value*/ ctx[12] + "")) set_data(t0, t0_value);
-			if (dirty & /*$summary*/ 128 && t2_value !== (t2_value = /*name*/ ctx[11] + "")) set_data(t2, t2_value);
+			if (dirty & /*$summary*/ 512 && t0_value !== (t0_value = /*value*/ ctx[20] + "")) set_data(t0, t0_value);
+			if (dirty & /*$summary*/ 512 && t2_value !== (t2_value = /*name*/ ctx[19] + "")) set_data(t2, t2_value);
 		},
 		d(detaching) {
 			if (detaching) detach(div);
@@ -434,14 +437,15 @@ function create_fragment(ctx) {
 	let div3;
 	let t4;
 	let div4;
-	let each_value_1 = /*$list*/ ctx[6];
+	let dispose;
+	let each_value_1 = /*$list*/ ctx[8];
 	let each_blocks_1 = [];
 
 	for (let i = 0; i < each_value_1.length; i += 1) {
 		each_blocks_1[i] = create_each_block_1(get_each_context_1(ctx, each_value_1, i));
 	}
 
-	let each_value = /*$summary*/ ctx[7];
+	let each_value = /*$summary*/ ctx[9];
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -456,7 +460,7 @@ function create_fragment(ctx) {
 			div0.textContent = "Wakfupedia Builder";
 			t1 = space();
 			div1 = element("div");
-			t2 = text(/*$buildSetIssue*/ ctx[5]);
+			t2 = text(/*$buildSetIssue*/ ctx[7]);
 			t3 = space();
 			div5 = element("div");
 			div3 = element("div");
@@ -472,14 +476,16 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr(div0, "class", "builder-title svelte-adzsde");
-			attr(div1, "class", "builder-issue svelte-adzsde");
-			div1.hidden = div1_hidden_value = !/*$buildSetIssue*/ ctx[5];
+			attr(div0, "class", "builder-title svelte-16nqpzd");
+			attr(div1, "class", "builder-issue svelte-16nqpzd");
+			div1.hidden = div1_hidden_value = !/*$buildSetIssue*/ ctx[7];
 			attr(div2, "class", "builder-nav");
-			attr(div3, "class", "builder-items svelte-adzsde");
-			attr(div4, "class", "builder-summary svelte-adzsde");
-			attr(div5, "class", "builder-content svelte-adzsde");
-			attr(div6, "class", "builder-container svelte-adzsde");
+			attr(div3, "class", "builder-items svelte-16nqpzd");
+			attr(div4, "class", "builder-summary svelte-16nqpzd");
+			attr(div5, "class", "builder-content svelte-16nqpzd");
+			attr(div6, "class", "builder-container svelte-16nqpzd");
+			set_style(div6, "top", /*builderTop*/ ctx[1] + "px");
+			set_style(div6, "right", /*builderRight*/ ctx[2] + "px");
 		},
 		m(target, anchor) {
 			insert(target, div6, anchor);
@@ -503,17 +509,23 @@ function create_fragment(ctx) {
 				each_blocks[i].m(div4, null);
 			}
 
-			/*div6_binding*/ ctx[10](div6);
+			/*div6_binding*/ ctx[18](div6);
+
+			dispose = [
+				listen(window, "mouseup", /*dragEnd*/ ctx[11]),
+				listen(window, "mousemove", /*dragUpdate*/ ctx[12]),
+				listen(div0, "mousedown", /*dragStart*/ ctx[10])
+			];
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*$buildSetIssue*/ 32) set_data(t2, /*$buildSetIssue*/ ctx[5]);
+			if (dirty & /*$buildSetIssue*/ 128) set_data(t2, /*$buildSetIssue*/ ctx[7]);
 
-			if (dirty & /*$buildSetIssue*/ 32 && div1_hidden_value !== (div1_hidden_value = !/*$buildSetIssue*/ ctx[5])) {
+			if (dirty & /*$buildSetIssue*/ 128 && div1_hidden_value !== (div1_hidden_value = !/*$buildSetIssue*/ ctx[7])) {
 				div1.hidden = div1_hidden_value;
 			}
 
-			if (dirty & /*remove, $list*/ 80) {
-				each_value_1 = /*$list*/ ctx[6];
+			if (dirty & /*remove, $list*/ 320) {
+				each_value_1 = /*$list*/ ctx[8];
 				let i;
 
 				for (i = 0; i < each_value_1.length; i += 1) {
@@ -535,8 +547,8 @@ function create_fragment(ctx) {
 				each_blocks_1.length = each_value_1.length;
 			}
 
-			if (dirty & /*$summary*/ 128) {
-				each_value = /*$summary*/ ctx[7];
+			if (dirty & /*$summary*/ 512) {
+				each_value = /*$summary*/ ctx[9];
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -557,6 +569,14 @@ function create_fragment(ctx) {
 
 				each_blocks.length = each_value.length;
 			}
+
+			if (dirty & /*builderTop*/ 2) {
+				set_style(div6, "top", /*builderTop*/ ctx[1] + "px");
+			}
+
+			if (dirty & /*builderRight*/ 4) {
+				set_style(div6, "right", /*builderRight*/ ctx[2] + "px");
+			}
 		},
 		i: noop,
 		o: noop,
@@ -564,7 +584,8 @@ function create_fragment(ctx) {
 			if (detaching) detach(div6);
 			destroy_each(each_blocks_1, detaching);
 			destroy_each(each_blocks, detaching);
-			/*div6_binding*/ ctx[10](null);
+			/*div6_binding*/ ctx[18](null);
+			run_all(dispose);
 		}
 	};
 }
@@ -572,21 +593,26 @@ function create_fragment(ctx) {
 function instance($$self, $$props, $$invalidate) {
 	let $buildSetIssue,
 		$$unsubscribe_buildSetIssue = noop,
-		$$subscribe_buildSetIssue = () => ($$unsubscribe_buildSetIssue(), $$unsubscribe_buildSetIssue = subscribe(buildSetIssue, $$value => $$invalidate(5, $buildSetIssue = $$value)), buildSetIssue);
+		$$subscribe_buildSetIssue = () => ($$unsubscribe_buildSetIssue(), $$unsubscribe_buildSetIssue = subscribe(buildSetIssue, $$value => $$invalidate(7, $buildSetIssue = $$value)), buildSetIssue);
 
 	let $list,
 		$$unsubscribe_list = noop,
-		$$subscribe_list = () => ($$unsubscribe_list(), $$unsubscribe_list = subscribe(list, $$value => $$invalidate(6, $list = $$value)), list);
+		$$subscribe_list = () => ($$unsubscribe_list(), $$unsubscribe_list = subscribe(list, $$value => $$invalidate(8, $list = $$value)), list);
 
 	let $summary,
 		$$unsubscribe_summary = noop,
-		$$subscribe_summary = () => ($$unsubscribe_summary(), $$unsubscribe_summary = subscribe(summary, $$value => $$invalidate(7, $summary = $$value)), summary);
+		$$subscribe_summary = () => ($$unsubscribe_summary(), $$unsubscribe_summary = subscribe(summary, $$value => $$invalidate(9, $summary = $$value)), summary);
 
 	$$self.$$.on_destroy.push(() => $$unsubscribe_buildSetIssue());
 	$$self.$$.on_destroy.push(() => $$unsubscribe_list());
 	$$self.$$.on_destroy.push(() => $$unsubscribe_summary());
 	let { items } = $$props;
 	let container;
+	let builderTop = 36;
+	let builderRight = 36;
+	let dragging = false;
+	let initDragPos;
+	let initPos;
 
 	Promise.all([
 		GM.getValue("builder/window/top", 36),
@@ -595,9 +621,28 @@ function instance($$self, $$props, $$invalidate) {
 				onMount(resolve);
 			})
 	]).then(([top, right]) => {
-		container.style.setProperty("--builder-top", top);
-		container.style.setProperty("--builder-right", right);
+		$$invalidate(1, builderTop = top);
+		$$invalidate(2, builderRight = right);
 	});
+
+	function dragStart(e) {
+		initDragPos = { x: e.screenX, y: e.screenY };
+		initPos = { top: builderTop, right: builderRight };
+		dragging = true;
+		e.preventDefault();
+	}
+
+	function dragEnd() {
+		dragging = false;
+		GM.setValue("builder/window/top", builderTop);
+		GM.setValue("builder/window/right", builderRight);
+	}
+
+	function dragUpdate(e) {
+		if (!dragging) return;
+		$$invalidate(1, builderTop = initPos.top + e.screenY - initDragPos.y);
+		$$invalidate(2, builderRight = initPos.right - (e.screenX - initDragPos.x));
+	}
 
 	const click_handler = item => remove(item.id);
 
@@ -608,7 +653,7 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	$$self.$set = $$props => {
-		if ("items" in $$props) $$invalidate(8, items = $$props.items);
+		if ("items" in $$props) $$invalidate(13, items = $$props.items);
 	};
 
 	let list;
@@ -617,13 +662,15 @@ function instance($$self, $$props, $$invalidate) {
 	let remove;
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*items*/ 256) {
-			 $$subscribe_list($$invalidate(1, { list, summary, buildSetIssue, remove } = items || {}, list, $$subscribe_summary($$invalidate(2, summary)), $$subscribe_buildSetIssue($$invalidate(3, buildSetIssue)), ($$invalidate(4, remove), $$invalidate(8, items))));
+		if ($$self.$$.dirty & /*items*/ 8192) {
+			 $$subscribe_list($$invalidate(3, { list, summary, buildSetIssue, remove } = items || {}, list, $$subscribe_summary($$invalidate(4, summary)), $$subscribe_buildSetIssue($$invalidate(5, buildSetIssue)), ($$invalidate(6, remove), $$invalidate(13, items))));
 		}
 	};
 
 	return [
 		container,
+		builderTop,
+		builderRight,
 		list,
 		summary,
 		buildSetIssue,
@@ -631,7 +678,13 @@ function instance($$self, $$props, $$invalidate) {
 		$buildSetIssue,
 		$list,
 		$summary,
+		dragStart,
+		dragEnd,
+		dragUpdate,
 		items,
+		dragging,
+		initDragPos,
+		initPos,
 		click_handler,
 		div6_binding
 	];
@@ -640,8 +693,8 @@ function instance($$self, $$props, $$invalidate) {
 class App extends SvelteComponent {
 	constructor(options) {
 		super();
-		if (!document.getElementById("svelte-adzsde-style")) add_css();
-		init(this, options, instance, create_fragment, safe_not_equal, { items: 8 });
+		if (!document.getElementById("svelte-16nqpzd-style")) add_css();
+		init(this, options, instance, create_fragment, safe_not_equal, { items: 13 });
 	}
 }
 
