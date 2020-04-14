@@ -72,7 +72,34 @@ function getSummary(items) {
       summary.set(name, (summary.get(name) || 0) + value);
     }
   }
-  return [...summary.entries()];
+  const stats = [...summary.entries()];
+  stats.sort((a, b) => getStatTier(a[0]) - getStatTier(b[0]));
+  return stats;
+}
+
+function getStatTier(stat) {
+  if (/^hp$/i.test(stat)) {
+    return 10;
+  }
+  if (/^ap$/i.test(stat)) {
+    return 20;
+  }
+  if (/^mp$/i.test(stat)) {
+    return 30;
+  }
+  if (/^\S+$/.test(stat) || /^critical hit$/i.test(stat)) {
+    return 40;
+  }
+  if (/mastery/i.test(stat)) {
+    if (/element/i.test(stat)) {
+      return 50;
+    }
+    return 55;
+  }
+  if (/element/i.test(stat)) {
+    return 60;
+  }
+  return 100;
 }
   
 function verifyBuildSet(items) {
