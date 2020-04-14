@@ -26,6 +26,17 @@ const selectActions = {
   },
   _DELETE_: async () => {
     await removeSet($currentSet);
+  },
+  _COPY_: async () => {
+    const newSet = prompt("Name of the new set");
+    if (!newSet) {
+      return;
+    }
+    const items = $itemList.slice();
+    await addSet(newSet);
+    for (const item of items) {
+      await itemList.add(item);
+    }
   }
 }
 
@@ -148,6 +159,7 @@ function dragUpdate(e) {
         <optgroup label="Actions">
           <option value="_NEW_">Add a new set</option>
           <option value="_DELETE_" disabled={$currentSet === "DEFAULT"}>Delete current set</option>
+          <option value="_COPY_">Copy current set</option>
         </optgroup>
       </select>
     </div>

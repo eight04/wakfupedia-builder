@@ -658,7 +658,7 @@ function get_each_context_2(ctx, list, i) {
 	return child_ctx;
 }
 
-// (144:10) {#each $setList as name}
+// (155:10) {#each $setList as name}
 function create_each_block_2(ctx) {
 	let option;
 	let t_value = /*name*/ ctx[18] + "";
@@ -677,9 +677,9 @@ function create_each_block_2(ctx) {
 			append(option, t);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*$setList*/ 16 && t_value !== (t_value = /*name*/ ctx[18] + "")) set_data(t, t_value);
+			if (dirty & /*$setList*/ 32 && t_value !== (t_value = /*name*/ ctx[18] + "")) set_data(t, t_value);
 
-			if (dirty & /*$setList*/ 16 && option_value_value !== (option_value_value = /*name*/ ctx[18])) {
+			if (dirty & /*$setList*/ 32 && option_value_value !== (option_value_value = /*name*/ ctx[18])) {
 				option.__value = option_value_value;
 			}
 
@@ -691,7 +691,7 @@ function create_each_block_2(ctx) {
 	};
 }
 
-// (160:6) {#each $itemList as item}
+// (172:6) {#each $itemList as item}
 function create_each_block_1(ctx) {
 	let img;
 	let img_src_value;
@@ -737,13 +737,13 @@ function create_each_block_1(ctx) {
 		p(new_ctx, dirty) {
 			ctx = new_ctx;
 
-			if (dirty & /*$itemList*/ 64 && img.src !== (img_src_value = /*item*/ ctx[22].icon)) {
+			if (dirty & /*$itemList*/ 16 && img.src !== (img_src_value = /*item*/ ctx[22].icon)) {
 				attr(img, "src", img_src_value);
 			}
 
-			if (dirty & /*$itemList*/ 64 && t1_value !== (t1_value = /*item*/ ctx[22].name + "")) set_data(t1, t1_value);
+			if (dirty & /*$itemList*/ 16 && t1_value !== (t1_value = /*item*/ ctx[22].name + "")) set_data(t1, t1_value);
 
-			if (dirty & /*$itemList*/ 64 && a_href_value !== (a_href_value = /*item*/ ctx[22].url)) {
+			if (dirty & /*$itemList*/ 16 && a_href_value !== (a_href_value = /*item*/ ctx[22].url)) {
 				attr(a, "href", a_href_value);
 			}
 		},
@@ -758,7 +758,7 @@ function create_each_block_1(ctx) {
 	};
 }
 
-// (169:6) {#each $summary as [name, value]}
+// (181:6) {#each $summary as [name, value]}
 function create_each_block(ctx) {
 	let div;
 	let t0_value = /*value*/ ctx[19] + "";
@@ -807,24 +807,25 @@ function create_fragment(ctx) {
 	let option1;
 	let t3;
 	let option1_disabled_value;
-	let t4;
-	let div2;
+	let option2;
 	let t5;
-	let div2_hidden_value;
+	let div2;
 	let t6;
+	let div2_hidden_value;
+	let t7;
 	let div6;
 	let div4;
-	let t7;
+	let t8;
 	let div5;
 	let dispose;
-	let each_value_2 = /*$setList*/ ctx[4];
+	let each_value_2 = /*$setList*/ ctx[5];
 	let each_blocks_2 = [];
 
 	for (let i = 0; i < each_value_2.length; i += 1) {
 		each_blocks_2[i] = create_each_block_2(get_each_context_2(ctx, each_value_2, i));
 	}
 
-	let each_value_1 = /*$itemList*/ ctx[6];
+	let each_value_1 = /*$itemList*/ ctx[4];
 	let each_blocks_1 = [];
 
 	for (let i = 0; i < each_value_1.length; i += 1) {
@@ -858,10 +859,12 @@ function create_fragment(ctx) {
 			option0.textContent = "Add a new set";
 			option1 = element("option");
 			t3 = text("Delete current set");
-			t4 = space();
+			option2 = element("option");
+			option2.textContent = "Copy current set";
+			t5 = space();
 			div2 = element("div");
-			t5 = text(/*$buildSetIssue*/ ctx[5]);
-			t6 = space();
+			t6 = text(/*$buildSetIssue*/ ctx[6]);
+			t7 = space();
 			div6 = element("div");
 			div4 = element("div");
 
@@ -869,7 +872,7 @@ function create_fragment(ctx) {
 				each_blocks_1[i].c();
 			}
 
-			t7 = space();
+			t8 = space();
 			div5 = element("div");
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -883,11 +886,13 @@ function create_fragment(ctx) {
 			option1.__value = "_DELETE_";
 			option1.value = option1.__value;
 			option1.disabled = option1_disabled_value = /*$currentSet*/ ctx[3] === "DEFAULT";
+			option2.__value = "_COPY_";
+			option2.value = option2.__value;
 			attr(optgroup1, "label", "Actions");
 			attr(select, "class", "builder-set-select svelte-z2h4wy");
 			attr(div1, "class", "builder-set-list");
 			attr(div2, "class", "builder-issue svelte-z2h4wy");
-			div2.hidden = div2_hidden_value = !/*$buildSetIssue*/ ctx[5];
+			div2.hidden = div2_hidden_value = !/*$buildSetIssue*/ ctx[6];
 			attr(div3, "class", "builder-nav");
 			attr(div4, "class", "builder-items svelte-z2h4wy");
 			attr(div5, "class", "builder-summary svelte-z2h4wy");
@@ -913,11 +918,12 @@ function create_fragment(ctx) {
 			append(optgroup1, option0);
 			append(optgroup1, option1);
 			append(option1, t3);
+			append(optgroup1, option2);
 			/*select_binding*/ ctx[16](select);
-			append(div3, t4);
+			append(div3, t5);
 			append(div3, div2);
-			append(div2, t5);
-			append(div7, t6);
+			append(div2, t6);
+			append(div7, t7);
 			append(div7, div6);
 			append(div6, div4);
 
@@ -925,7 +931,7 @@ function create_fragment(ctx) {
 				each_blocks_1[i].m(div4, null);
 			}
 
-			append(div6, t7);
+			append(div6, t8);
 			append(div6, div5);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -940,8 +946,8 @@ function create_fragment(ctx) {
 			];
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*$setList*/ 16) {
-				each_value_2 = /*$setList*/ ctx[4];
+			if (dirty & /*$setList*/ 32) {
+				each_value_2 = /*$setList*/ ctx[5];
 				let i;
 
 				for (i = 0; i < each_value_2.length; i += 1) {
@@ -967,14 +973,14 @@ function create_fragment(ctx) {
 				option1.disabled = option1_disabled_value;
 			}
 
-			if (dirty & /*$buildSetIssue*/ 32) set_data(t5, /*$buildSetIssue*/ ctx[5]);
+			if (dirty & /*$buildSetIssue*/ 64) set_data(t6, /*$buildSetIssue*/ ctx[6]);
 
-			if (dirty & /*$buildSetIssue*/ 32 && div2_hidden_value !== (div2_hidden_value = !/*$buildSetIssue*/ ctx[5])) {
+			if (dirty & /*$buildSetIssue*/ 64 && div2_hidden_value !== (div2_hidden_value = !/*$buildSetIssue*/ ctx[6])) {
 				div2.hidden = div2_hidden_value;
 			}
 
-			if (dirty & /*itemList, $itemList*/ 64) {
-				each_value_1 = /*$itemList*/ ctx[6];
+			if (dirty & /*itemList, $itemList*/ 16) {
+				each_value_1 = /*$itemList*/ ctx[4];
 				let i;
 
 				for (i = 0; i < each_value_1.length; i += 1) {
@@ -1042,14 +1048,14 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let $currentSet;
+	let $itemList;
 	let $setList;
 	let $buildSetIssue;
-	let $itemList;
 	let $summary;
 	component_subscribe($$self, currentSet, $$value => $$invalidate(3, $currentSet = $$value));
-	component_subscribe($$self, setList, $$value => $$invalidate(4, $setList = $$value));
-	component_subscribe($$self, buildSetIssue, $$value => $$invalidate(5, $buildSetIssue = $$value));
-	component_subscribe($$self, itemList, $$value => $$invalidate(6, $itemList = $$value));
+	component_subscribe($$self, itemList, $$value => $$invalidate(4, $itemList = $$value));
+	component_subscribe($$self, setList, $$value => $$invalidate(5, $setList = $$value));
+	component_subscribe($$self, buildSetIssue, $$value => $$invalidate(6, $buildSetIssue = $$value));
 	component_subscribe($$self, summary, $$value => $$invalidate(7, $summary = $$value));
 	let setSelectEl;
 
@@ -1070,6 +1076,20 @@ function instance($$self, $$props, $$invalidate) {
 		},
 		_DELETE_: async () => {
 			await removeSet($currentSet);
+		},
+		_COPY_: async () => {
+			const newSet = prompt("Name of the new set");
+
+			if (!newSet) {
+				return;
+			}
+
+			const items = $itemList.slice();
+			await addSet(newSet);
+
+			for (const item of items) {
+				await itemList.add(item);
+			}
 		}
 	};
 
@@ -1138,9 +1158,9 @@ function instance($$self, $$props, $$invalidate) {
 		builderTop,
 		builderRight,
 		$currentSet,
+		$itemList,
 		$setList,
 		$buildSetIssue,
-		$itemList,
 		$summary,
 		updateSelectedSet,
 		dragStart,
