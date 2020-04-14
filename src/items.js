@@ -79,6 +79,7 @@ function verifyBuildSet(items) {
   if (!items) return;
   const count = {};
   const unique = new Set;
+  const rarityCount = {};
   for (const item of items) {
     if (unique.has(item.id)) {
       return `Duplicate item: ${item.name}`;
@@ -92,6 +93,13 @@ function verifyBuildSet(items) {
     ) {
       return `Too many ${item.type}`;
     }
+    
+    if (item.rarity) {
+      rarityCount[item.rarity] = (rarityCount[item.rarity] || 0) + 1;
+      if (/^(epique|relic)$/i.test(item.rarity) && rarityCount[item.rarity] > 1) {
+        return `Too many ${item.rarity} item`;
+      }
+    }
   }
 }
   
@@ -103,6 +111,7 @@ export function getCurrentItem() {
   const name = document.querySelector(".ak-title-container h1").textContent.trim();
   const icon = document.querySelector(".ak-encyclo-detail-illu img").src.replace(/item\/\d+/, "item/42");
   const type = document.querySelector(".ak-encyclo-detail-type").textContent.split(/\s*:\s*/)[1].trim().toLowerCase();
+  const rarity = document.querySelector(".ak-object-rarity span").textContent.trim();
   const stats = [];
   const url = location.href;
   
@@ -114,5 +123,5 @@ export function getCurrentItem() {
       stats.push([match[2], Number(match[1])]);
     }
   }
-  return {id, name, icon, type, stats, url};
+  return {id, name, icon, type, stats, url, rarity};
 }
