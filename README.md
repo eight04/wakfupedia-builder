@@ -20,6 +20,13 @@ This script collects data from item's page. It doesn't know the set effect.
 Changelog
 ---------
 
+* 0.3.0 (Apr 15, 2020)
+
+  - Add: copy action.
+  - Add: summary table are sorted.
+  - Fix: only one unique/relic is allowed.
+  - Fix: missing namespace.
+
 * 0.2.0 (Mar 10, 2020)
 
   - Fix: error with negative numbers.
