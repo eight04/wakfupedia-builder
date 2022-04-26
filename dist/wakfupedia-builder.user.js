@@ -623,7 +623,7 @@ function getCurrentItem() {
     if (!/Characteristics/i.test(title.textContent)) continue;
     for (const el of title.nextElementSibling.querySelectorAll(".show .ak-title")) {
       const text = el.textContent.trim();
-      const match = text.match(/^(-?\d+(?:\.\d+)?)%?\s+(.+)/);
+      const match = text.match(/^([+-]?\d+(?:\.\d+)?)%?\s+(.+)/);
       stats.push([match[2], Number(match[1])]);
     }
   }
