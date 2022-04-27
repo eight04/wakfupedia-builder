@@ -1,6 +1,6 @@
 import svelte from "rollup-plugin-svelte";
 import meta from "userscript-meta-cli";
-import resolve from "rollup-plugin-node-resolve";
+import resolve from "@rollup/plugin-node-resolve";
 
 export default {
   input: "src/index.js",
@@ -10,7 +10,9 @@ export default {
     banner: meta.stringify(meta.getMeta())
   },
   plugins: [
-    resolve(),
-    svelte()
+    resolve({browser: true}),
+    svelte({
+      emitCss: false
+    })
   ]
 };

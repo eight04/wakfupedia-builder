@@ -34,6 +34,17 @@ function is_function(thing) {
 function safe_not_equal(a, b) {
     return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
+let src_url_equal_anchor;
+function src_url_equal(element_src, url) {
+    if (!src_url_equal_anchor) {
+        src_url_equal_anchor = document.createElement('a');
+    }
+    src_url_equal_anchor.href = url;
+    return element_src === src_url_equal_anchor.href;
+}
+function is_empty(obj) {
+    return Object.keys(obj).length === 0;
+}
 function subscribe(store, ...callbacks) {
     if (store == null) {
         return noop;
@@ -44,9 +55,29 @@ function subscribe(store, ...callbacks) {
 function component_subscribe(component, store, callback) {
     component.$$.on_destroy.push(subscribe(store, callback));
 }
-
 function append(target, node) {
     target.appendChild(node);
+}
+function append_styles(target, style_sheet_id, styles) {
+    const append_styles_to = get_root_for_style(target);
+    if (!append_styles_to.getElementById(style_sheet_id)) {
+        const style = element('style');
+        style.id = style_sheet_id;
+        style.textContent = styles;
+        append_stylesheet(append_styles_to, style);
+    }
+}
+function get_root_for_style(node) {
+    if (!node)
+        return document;
+    const root = node.getRootNode ? node.getRootNode() : node.ownerDocument;
+    if (root && root.host) {
+        return root;
+    }
+    return node.ownerDocument;
+}
+function append_stylesheet(node, style) {
+    append(node.head || node, style);
 }
 function insert(target, node, anchor) {
     target.insertBefore(node, anchor || null);
@@ -84,15 +115,20 @@ function children(element) {
 }
 function set_data(text, data) {
     data = '' + data;
-    if (text.data !== data)
+    if (text.wholeText !== data)
         text.data = data;
 }
 function set_style(node, key, value, important) {
-    node.style.setProperty(key, value, important ? 'important' : '');
+    if (value === null) {
+        node.style.removeProperty(key);
+    }
+    else {
+        node.style.setProperty(key, value, important ? 'important' : '');
+    }
 }
-function custom_event(type, detail) {
+function custom_event(type, detail, bubbles = false) {
     const e = document.createEvent('CustomEvent');
-    e.initCustomEvent(type, false, false, detail);
+    e.initCustomEvent(type, bubbles, false, detail);
     return e;
 }
 
@@ -102,7 +138,7 @@ function set_current_component(component) {
 }
 function get_current_component() {
     if (!current_component)
-        throw new Error(`Function called outside component initialization`);
+        throw new Error('Function called outside component initialization');
     return current_component;
 }
 function afterUpdate(fn) {
@@ -138,21 +174,40 @@ function schedule_update() {
 function add_render_callback(fn) {
     render_callbacks.push(fn);
 }
-let flushing = false;
+// flush() calls callbacks in this order:
+// 1. All beforeUpdate callbacks, in order: parents before children
+// 2. All bind:this callbacks, in reverse order: children before parents.
+// 3. All afterUpdate callbacks, in order: parents before children. EXCEPT
+//    for afterUpdates called during the initial onMount, which are called in
+//    reverse order: children before parents.
+// Since callbacks might update component values, which could trigger another
+// call to flush(), the following steps guard against this:
+// 1. During beforeUpdate, any updated components will be added to the
+//    dirty_components array and will cause a reentrant call to flush(). Because
+//    the flush index is kept outside the function, the reentrant call will pick
+//    up where the earlier call left off and go through all dirty components. The
+//    current_component value is saved and restored so that the reentrant call will
+//    not interfere with the "parent" flush() call.
+// 2. bind:this callbacks cannot trigger new flush() calls.
+// 3. During afterUpdate, any updated components will NOT have their afterUpdate
+//    callback called a second time; the seen_callbacks set, outside the flush()
+//    function, guarantees this behavior.
 const seen_callbacks = new Set();
+let flushidx = 0; // Do *not* move this inside the flush() function
 function flush() {
-    if (flushing)
-        return;
-    flushing = true;
+    const saved_component = current_component;
     do {
         // first, call beforeUpdate functions
         // and update components
-        for (let i = 0; i < dirty_components.length; i += 1) {
-            const component = dirty_components[i];
+        while (flushidx < dirty_components.length) {
+            const component = dirty_components[flushidx];
+            flushidx++;
             set_current_component(component);
             update(component.$$);
         }
+        set_current_component(null);
         dirty_components.length = 0;
+        flushidx = 0;
         while (binding_callbacks.length)
             binding_callbacks.pop()();
         // then, once components are updated, call
@@ -172,8 +227,8 @@ function flush() {
         flush_callbacks.pop()();
     }
     update_scheduled = false;
-    flushing = false;
     seen_callbacks.clear();
+    set_current_component(saved_component);
 }
 function update($$) {
     if ($$.fragment !== null) {
@@ -192,22 +247,24 @@ function transition_in(block, local) {
         block.i(local);
     }
 }
-function mount_component(component, target, anchor) {
+function mount_component(component, target, anchor, customElement) {
     const { fragment, on_mount, on_destroy, after_update } = component.$$;
     fragment && fragment.m(target, anchor);
-    // onMount happens before the initial afterUpdate
-    add_render_callback(() => {
-        const new_on_destroy = on_mount.map(run).filter(is_function);
-        if (on_destroy) {
-            on_destroy.push(...new_on_destroy);
-        }
-        else {
-            // Edge case - component was destroyed immediately,
-            // most likely as a result of a binding initialising
-            run_all(new_on_destroy);
-        }
-        component.$$.on_mount = [];
-    });
+    if (!customElement) {
+        // onMount happens before the initial afterUpdate
+        add_render_callback(() => {
+            const new_on_destroy = on_mount.map(run).filter(is_function);
+            if (on_destroy) {
+                on_destroy.push(...new_on_destroy);
+            }
+            else {
+                // Edge case - component was destroyed immediately,
+                // most likely as a result of a binding initialising
+                run_all(new_on_destroy);
+            }
+            component.$$.on_mount = [];
+        });
+    }
     after_update.forEach(add_render_callback);
 }
 function destroy_component(component, detaching) {
@@ -229,10 +286,9 @@ function make_dirty(component, i) {
     }
     component.$$.dirty[(i / 31) | 0] |= (1 << (i % 31));
 }
-function init(component, options, instance, create_fragment, not_equal, props, dirty = [-1]) {
+function init(component, options, instance, create_fragment, not_equal, props, append_styles, dirty = [-1]) {
     const parent_component = current_component;
     set_current_component(component);
-    const prop_values = options.props || {};
     const $$ = component.$$ = {
         fragment: null,
         ctx: null,
@@ -244,19 +300,23 @@ function init(component, options, instance, create_fragment, not_equal, props, d
         // lifecycle
         on_mount: [],
         on_destroy: [],
+        on_disconnect: [],
         before_update: [],
         after_update: [],
-        context: new Map(parent_component ? parent_component.$$.context : []),
+        context: new Map(options.context || (parent_component ? parent_component.$$.context : [])),
         // everything else
         callbacks: blank_object(),
-        dirty
+        dirty,
+        skip_bound: false,
+        root: options.target || parent_component.$$.root
     };
+    append_styles && append_styles($$.root);
     let ready = false;
     $$.ctx = instance
-        ? instance(component, prop_values, (i, ret, ...rest) => {
+        ? instance(component, options.props || {}, (i, ret, ...rest) => {
             const value = rest.length ? rest[0] : ret;
             if ($$.ctx && not_equal($$.ctx[i], $$.ctx[i] = value)) {
-                if ($$.bound[i])
+                if (!$$.skip_bound && $$.bound[i])
                     $$.bound[i](value);
                 if (ready)
                     make_dirty(component, i);
@@ -271,8 +331,10 @@ function init(component, options, instance, create_fragment, not_equal, props, d
     $$.fragment = create_fragment ? create_fragment($$.ctx) : false;
     if (options.target) {
         if (options.hydrate) {
+            const nodes = children(options.target);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            $$.fragment && $$.fragment.l(children(options.target));
+            $$.fragment && $$.fragment.l(nodes);
+            nodes.forEach(detach);
         }
         else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -280,11 +342,14 @@ function init(component, options, instance, create_fragment, not_equal, props, d
         }
         if (options.intro)
             transition_in(component.$$.fragment);
-        mount_component(component, options.target, options.anchor);
+        mount_component(component, options.target, options.anchor, options.customElement);
         flush();
     }
     set_current_component(parent_component);
 }
+/**
+ * Base class for Svelte components. Used when dev=false.
+ */
 class SvelteComponent {
     $destroy() {
         destroy_component(this, 1);
@@ -299,8 +364,12 @@ class SvelteComponent {
                 callbacks.splice(index, 1);
         };
     }
-    $set() {
-        // overridden by instance, if it has props
+    $set($$props) {
+        if (this.$$set && !is_empty($$props)) {
+            this.$$.skip_bound = true;
+            this.$$set($$props);
+            this.$$.skip_bound = false;
+        }
     }
 }
 
@@ -312,7 +381,7 @@ const subscriber_queue = [];
  */
 function readable(value, start) {
     return {
-        subscribe: writable(value, start).subscribe,
+        subscribe: writable(value, start).subscribe
     };
 }
 /**
@@ -322,16 +391,15 @@ function readable(value, start) {
  */
 function writable(value, start = noop) {
     let stop;
-    const subscribers = [];
+    const subscribers = new Set();
     function set(new_value) {
         if (safe_not_equal(value, new_value)) {
             value = new_value;
             if (stop) { // store is ready
                 const run_queue = !subscriber_queue.length;
-                for (let i = 0; i < subscribers.length; i += 1) {
-                    const s = subscribers[i];
-                    s[1]();
-                    subscriber_queue.push(s, value);
+                for (const subscriber of subscribers) {
+                    subscriber[1]();
+                    subscriber_queue.push(subscriber, value);
                 }
                 if (run_queue) {
                     for (let i = 0; i < subscriber_queue.length; i += 2) {
@@ -347,17 +415,14 @@ function writable(value, start = noop) {
     }
     function subscribe(run, invalidate = noop) {
         const subscriber = [run, invalidate];
-        subscribers.push(subscriber);
-        if (subscribers.length === 1) {
+        subscribers.add(subscriber);
+        if (subscribers.size === 1) {
             stop = start(set) || noop;
         }
         run(value);
         return () => {
-            const index = subscribers.indexOf(subscriber);
-            if (index !== -1) {
-                subscribers.splice(index, 1);
-            }
-            if (subscribers.length === 0) {
+            subscribers.delete(subscriber);
+            if (subscribers.size === 0) {
                 stop();
                 stop = null;
             }
@@ -623,20 +688,17 @@ function getCurrentItem() {
     if (!/Characteristics/i.test(title.textContent)) continue;
     for (const el of title.nextElementSibling.querySelectorAll(".show .ak-title")) {
       const text = el.textContent.trim();
-      const match = text.match(/^(-?\d+(?:\.\d+)?)%?\s+(.+)/);
+      const match = text.match(/^([+-]?\d+(?:\.\d+)?)%?\s+(.+)/);
       stats.push([match[2], Number(match[1])]);
     }
   }
   return {id, name, icon, type, stats, url, rarity};
 }
 
-/* src\App.svelte generated by Svelte v3.19.1 */
+/* src\App.svelte generated by Svelte v3.47.0 */
 
-function add_css() {
-	var style = element("style");
-	style.id = "svelte-z2h4wy-style";
-	style.textContent = ".builder-container.svelte-z2h4wy.svelte-z2h4wy{position:fixed;background:white;z-index:999999;max-height:calc(100% - 72px);box-shadow:3px 3px 1.5rem black;display:grid;grid-template-rows:min-content 1fr}.builder-title.svelte-z2h4wy.svelte-z2h4wy{background:#40b2b5;text-shadow:0 2px 2px rgba(0,0,0,0.1);color:white;padding:3px 12px;font-family:\"bebas_neueregular\", sans-serif;font-size:2.4rem;text-transform:uppercase;cursor:move}.builder-set-select.svelte-z2h4wy.svelte-z2h4wy{display:block;width:100%}.builder-issue.svelte-z2h4wy.svelte-z2h4wy{padding:6px;background:pink;color:red}.builder-content.svelte-z2h4wy.svelte-z2h4wy{overflow:auto}.builder-items.svelte-z2h4wy.svelte-z2h4wy{display:grid;grid-template-columns:min-content 1fr min-content;align-items:center;border-bottom:1px solid #e4e4e4}.builder-items.svelte-z2h4wy img.svelte-z2h4wy{margin:3px}.builder-items.svelte-z2h4wy .builder-item-remove.svelte-z2h4wy{margin:6px}.builder-summary.svelte-z2h4wy.svelte-z2h4wy{padding:6px}";
-	append(document.head, style);
+function add_css$1(target) {
+	append_styles(target, "svelte-4orkm9", ".builder-container.svelte-4orkm9.svelte-4orkm9{position:fixed;background:white;z-index:999999;max-height:calc(100% - 72px);box-shadow:3px 3px 1.5rem black;display:grid;grid-template-rows:min-content 1fr}.builder-title.svelte-4orkm9.svelte-4orkm9{background:#40b2b5;text-shadow:0 2px 2px rgba(0,0,0,0.1);color:white;padding:3px 12px;font-family:\"bebas_neueregular\", sans-serif;font-size:2.4rem;text-transform:uppercase;cursor:move}.builder-set-select.svelte-4orkm9.svelte-4orkm9{display:block;width:100%}.builder-issue.svelte-4orkm9.svelte-4orkm9{padding:6px;background:pink;color:red}.builder-content.svelte-4orkm9.svelte-4orkm9{overflow:auto}.builder-items.svelte-4orkm9.svelte-4orkm9{display:grid;grid-template-columns:min-content 1fr min-content;align-items:center;border-bottom:1px solid #e4e4e4}.builder-items.svelte-4orkm9 img.svelte-4orkm9{margin:3px}.builder-items.svelte-4orkm9 .builder-item-remove.svelte-4orkm9{margin:6px}.builder-summary.svelte-4orkm9.svelte-4orkm9{padding:6px}");
 }
 
 function get_each_context(ctx, list, i) {
@@ -658,7 +720,7 @@ function get_each_context_2(ctx, list, i) {
 	return child_ctx;
 }
 
-// (155:10) {#each $setList as name}
+// (156:10) {#each $setList as name}
 function create_each_block_2(ctx) {
 	let option;
 	let t_value = /*name*/ ctx[18] + "";
@@ -681,9 +743,8 @@ function create_each_block_2(ctx) {
 
 			if (dirty & /*$setList*/ 32 && option_value_value !== (option_value_value = /*name*/ ctx[18])) {
 				option.__value = option_value_value;
+				option.value = option.__value;
 			}
-
-			option.value = option.__value;
 		},
 		d(detaching) {
 			if (detaching) detach(option);
@@ -691,7 +752,7 @@ function create_each_block_2(ctx) {
 	};
 }
 
-// (172:6) {#each $itemList as item}
+// (173:6) {#each $itemList as item}
 function create_each_block_1(ctx) {
 	let img;
 	let img_src_value;
@@ -702,10 +763,11 @@ function create_each_block_1(ctx) {
 	let a_href_value;
 	let t2;
 	let button;
+	let mounted;
 	let dispose;
 
-	function click_handler(...args) {
-		return /*click_handler*/ ctx[17](/*item*/ ctx[22], ...args);
+	function click_handler() {
+		return /*click_handler*/ ctx[13](/*item*/ ctx[22]);
 	}
 
 	return {
@@ -717,12 +779,12 @@ function create_each_block_1(ctx) {
 			t2 = space();
 			button = element("button");
 			button.textContent = "✗\r\n        ";
-			if (img.src !== (img_src_value = /*item*/ ctx[22].icon)) attr(img, "src", img_src_value);
+			if (!src_url_equal(img.src, img_src_value = /*item*/ ctx[22].icon)) attr(img, "src", img_src_value);
 			attr(img, "alt", "");
-			attr(img, "class", "svelte-z2h4wy");
+			attr(img, "class", "svelte-4orkm9");
 			attr(a, "class", "builder-item-name");
 			attr(a, "href", a_href_value = /*item*/ ctx[22].url);
-			attr(button, "class", "builder-item-remove svelte-z2h4wy");
+			attr(button, "class", "builder-item-remove svelte-4orkm9");
 			attr(button, "type", "button");
 		},
 		m(target, anchor) {
@@ -732,12 +794,16 @@ function create_each_block_1(ctx) {
 			append(a, t1);
 			insert(target, t2, anchor);
 			insert(target, button, anchor);
-			dispose = listen(button, "click", click_handler);
+
+			if (!mounted) {
+				dispose = listen(button, "click", click_handler);
+				mounted = true;
+			}
 		},
 		p(new_ctx, dirty) {
 			ctx = new_ctx;
 
-			if (dirty & /*$itemList*/ 16 && img.src !== (img_src_value = /*item*/ ctx[22].icon)) {
+			if (dirty & /*$itemList*/ 16 && !src_url_equal(img.src, img_src_value = /*item*/ ctx[22].icon)) {
 				attr(img, "src", img_src_value);
 			}
 
@@ -753,12 +819,13 @@ function create_each_block_1(ctx) {
 			if (detaching) detach(a);
 			if (detaching) detach(t2);
 			if (detaching) detach(button);
+			mounted = false;
 			dispose();
 		}
 	};
 }
 
-// (181:6) {#each $summary as [name, value]}
+// (182:6) {#each $summary as [name, value]}
 function create_each_block(ctx) {
 	let div;
 	let t0_value = /*value*/ ctx[19] + "";
@@ -794,7 +861,7 @@ function create_each_block(ctx) {
 	};
 }
 
-function create_fragment(ctx) {
+function create_fragment$1(ctx) {
 	let div7;
 	let div3;
 	let div0;
@@ -817,6 +884,7 @@ function create_fragment(ctx) {
 	let div4;
 	let t8;
 	let div5;
+	let mounted;
 	let dispose;
 	let each_value_2 = /*$setList*/ ctx[5];
 	let each_blocks_2 = [];
@@ -879,27 +947,27 @@ function create_fragment(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr(div0, "class", "builder-title svelte-z2h4wy");
+			attr(div0, "class", "builder-title svelte-4orkm9");
 			attr(optgroup0, "label", "Sets");
 			option0.__value = "_NEW_";
 			option0.value = option0.__value;
 			option1.__value = "_DELETE_";
 			option1.value = option1.__value;
-			option1.disabled = option1_disabled_value = /*$currentSet*/ ctx[3] === "DEFAULT";
+			option1.disabled = option1_disabled_value = /*$currentSet*/ ctx[1] === "DEFAULT";
 			option2.__value = "_COPY_";
 			option2.value = option2.__value;
 			attr(optgroup1, "label", "Actions");
-			attr(select, "class", "builder-set-select svelte-z2h4wy");
+			attr(select, "class", "builder-set-select svelte-4orkm9");
 			attr(div1, "class", "builder-set-list");
-			attr(div2, "class", "builder-issue svelte-z2h4wy");
+			attr(div2, "class", "builder-issue svelte-4orkm9");
 			div2.hidden = div2_hidden_value = !/*$buildSetIssue*/ ctx[6];
 			attr(div3, "class", "builder-nav");
-			attr(div4, "class", "builder-items svelte-z2h4wy");
-			attr(div5, "class", "builder-summary svelte-z2h4wy");
-			attr(div6, "class", "builder-content svelte-z2h4wy");
-			attr(div7, "class", "builder-container svelte-z2h4wy");
-			set_style(div7, "top", /*builderTop*/ ctx[1] + "px");
-			set_style(div7, "right", /*builderRight*/ ctx[2] + "px");
+			attr(div4, "class", "builder-items svelte-4orkm9");
+			attr(div5, "class", "builder-summary svelte-4orkm9");
+			attr(div6, "class", "builder-content svelte-4orkm9");
+			attr(div7, "class", "builder-container svelte-4orkm9");
+			set_style(div7, "top", /*builderTop*/ ctx[2] + "px");
+			set_style(div7, "right", /*builderRight*/ ctx[3] + "px");
 		},
 		m(target, anchor) {
 			insert(target, div7, anchor);
@@ -919,7 +987,7 @@ function create_fragment(ctx) {
 			append(optgroup1, option1);
 			append(option1, t3);
 			append(optgroup1, option2);
-			/*select_binding*/ ctx[16](select);
+			/*select_binding*/ ctx[12](select);
 			append(div3, t5);
 			append(div3, div2);
 			append(div2, t6);
@@ -938,12 +1006,16 @@ function create_fragment(ctx) {
 				each_blocks[i].m(div5, null);
 			}
 
-			dispose = [
-				listen(window, "mouseup", /*dragEnd*/ ctx[10]),
-				listen(window, "mousemove", /*dragUpdate*/ ctx[11]),
-				listen(div0, "mousedown", /*dragStart*/ ctx[9]),
-				listen(select, "change", /*updateSelectedSet*/ ctx[8])
-			];
+			if (!mounted) {
+				dispose = [
+					listen(window, "mouseup", /*dragEnd*/ ctx[10]),
+					listen(window, "mousemove", /*dragUpdate*/ ctx[11]),
+					listen(div0, "mousedown", /*dragStart*/ ctx[9]),
+					listen(select, "change", /*updateSelectedSet*/ ctx[8])
+				];
+
+				mounted = true;
+			}
 		},
 		p(ctx, [dirty]) {
 			if (dirty & /*$setList*/ 32) {
@@ -969,7 +1041,7 @@ function create_fragment(ctx) {
 				each_blocks_2.length = each_value_2.length;
 			}
 
-			if (dirty & /*$currentSet*/ 8 && option1_disabled_value !== (option1_disabled_value = /*$currentSet*/ ctx[3] === "DEFAULT")) {
+			if (dirty & /*$currentSet*/ 2 && option1_disabled_value !== (option1_disabled_value = /*$currentSet*/ ctx[1] === "DEFAULT")) {
 				option1.disabled = option1_disabled_value;
 			}
 
@@ -1025,12 +1097,12 @@ function create_fragment(ctx) {
 				each_blocks.length = each_value.length;
 			}
 
-			if (dirty & /*builderTop*/ 2) {
-				set_style(div7, "top", /*builderTop*/ ctx[1] + "px");
+			if (dirty & /*builderTop*/ 4) {
+				set_style(div7, "top", /*builderTop*/ ctx[2] + "px");
 			}
 
-			if (dirty & /*builderRight*/ 4) {
-				set_style(div7, "right", /*builderRight*/ ctx[2] + "px");
+			if (dirty & /*builderRight*/ 8) {
+				set_style(div7, "right", /*builderRight*/ ctx[3] + "px");
 			}
 		},
 		i: noop,
@@ -1038,21 +1110,22 @@ function create_fragment(ctx) {
 		d(detaching) {
 			if (detaching) detach(div7);
 			destroy_each(each_blocks_2, detaching);
-			/*select_binding*/ ctx[16](null);
+			/*select_binding*/ ctx[12](null);
 			destroy_each(each_blocks_1, detaching);
 			destroy_each(each_blocks, detaching);
+			mounted = false;
 			run_all(dispose);
 		}
 	};
 }
 
-function instance($$self, $$props, $$invalidate) {
+function instance$1($$self, $$props, $$invalidate) {
 	let $currentSet;
 	let $itemList;
 	let $setList;
 	let $buildSetIssue;
 	let $summary;
-	component_subscribe($$self, currentSet, $$value => $$invalidate(3, $currentSet = $$value));
+	component_subscribe($$self, currentSet, $$value => $$invalidate(1, $currentSet = $$value));
 	component_subscribe($$self, itemList, $$value => $$invalidate(4, $itemList = $$value));
 	component_subscribe($$self, setList, $$value => $$invalidate(5, $setList = $$value));
 	component_subscribe($$self, buildSetIssue, $$value => $$invalidate(6, $buildSetIssue = $$value));
@@ -1112,8 +1185,8 @@ function instance($$self, $$props, $$invalidate) {
 	let initPos;
 
 	Promise.all([GM.getValue("builder/window/top", 36), GM.getValue("builder/window/right", 36)]).then(([top, right]) => {
-		$$invalidate(1, builderTop = top);
-		$$invalidate(2, builderRight = right);
+		$$invalidate(2, builderTop = top);
+		$$invalidate(3, builderRight = right);
 	});
 
 	function dragStart(e) {
@@ -1131,21 +1204,22 @@ function instance($$self, $$props, $$invalidate) {
 
 	function dragUpdate(e) {
 		if (!dragging) return;
-		$$invalidate(1, builderTop = initPos.top + e.screenY - initDragPos.y);
-		$$invalidate(2, builderRight = initPos.right - (e.screenX - initDragPos.x));
+		$$invalidate(2, builderTop = initPos.top + e.screenY - initDragPos.y);
+		$$invalidate(3, builderRight = initPos.right - (e.screenX - initDragPos.x));
 	}
 
 	function select_binding($$value) {
-		binding_callbacks[$$value ? "unshift" : "push"](() => {
-			$$invalidate(0, setSelectEl = $$value);
+		binding_callbacks[$$value ? 'unshift' : 'push'](() => {
+			setSelectEl = $$value;
+			($$invalidate(0, setSelectEl), $$invalidate(1, $currentSet));
 		});
 	}
 
 	const click_handler = item => itemList.remove(item.id);
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*setSelectEl, $currentSet*/ 9) {
-			 {
+		if ($$self.$$.dirty & /*setSelectEl, $currentSet*/ 3) {
+			{
 				if (setSelectEl) {
 					$$invalidate(0, setSelectEl.value = $currentSet, setSelectEl);
 				}
@@ -1155,9 +1229,9 @@ function instance($$self, $$props, $$invalidate) {
 
 	return [
 		setSelectEl,
+		$currentSet,
 		builderTop,
 		builderRight,
-		$currentSet,
 		$itemList,
 		$setList,
 		$buildSetIssue,
@@ -1166,10 +1240,6 @@ function instance($$self, $$props, $$invalidate) {
 		dragStart,
 		dragEnd,
 		dragUpdate,
-		dragging,
-		initDragPos,
-		initPos,
-		selectActions,
 		select_binding,
 		click_handler
 	];
@@ -1178,22 +1248,19 @@ function instance($$self, $$props, $$invalidate) {
 class App extends SvelteComponent {
 	constructor(options) {
 		super();
-		if (!document.getElementById("svelte-z2h4wy-style")) add_css();
-		init(this, options, instance, create_fragment, safe_not_equal, {});
+		init(this, options, instance$1, create_fragment$1, safe_not_equal, {}, add_css$1);
 	}
 }
 
-/* src\Button.svelte generated by Svelte v3.19.1 */
+/* src\Button.svelte generated by Svelte v3.47.0 */
 
-function add_css$1() {
-	var style = element("style");
-	style.id = "svelte-czc51x-style";
-	style.textContent = ".builder-add-item.svelte-czc51x{position:absolute;top:12px;bottom:12px;right:146px;width:42px;background:rgba(0, 0, 0, 0.3);border:none;color:white}.builder-add-item.svelte-czc51x:hover{text-decoration:underline}";
-	append(document.head, style);
+function add_css(target) {
+	append_styles(target, "svelte-k4twlx", ".builder-add-item.svelte-k4twlx{position:absolute;top:12px;bottom:12px;right:146px;width:42px;background:rgba(0, 0, 0, 0.3);border:none;color:white}.builder-add-item.svelte-k4twlx:hover{text-decoration:underline}");
 }
 
-function create_fragment$1(ctx) {
+function create_fragment(ctx) {
 	let button;
+	let mounted;
 	let dispose;
 
 	return {
@@ -1201,23 +1268,28 @@ function create_fragment$1(ctx) {
 			button = element("button");
 			button.textContent = "+";
 			attr(button, "type", "button");
-			attr(button, "class", "builder-add-item svelte-czc51x");
+			attr(button, "class", "builder-add-item svelte-k4twlx");
 		},
 		m(target, anchor) {
 			insert(target, button, anchor);
-			dispose = listen(button, "click", /*click_handler*/ ctx[1]);
+
+			if (!mounted) {
+				dispose = listen(button, "click", /*click_handler*/ ctx[1]);
+				mounted = true;
+			}
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
 			if (detaching) detach(button);
+			mounted = false;
 			dispose();
 		}
 	};
 }
 
-function instance$1($$self) {
+function instance($$self) {
 	const dispatch = createEventDispatcher();
 	const click_handler = () => dispatch("addItem");
 	return [dispatch, click_handler];
@@ -1226,8 +1298,7 @@ function instance$1($$self) {
 class Button extends SvelteComponent {
 	constructor(options) {
 		super();
-		if (!document.getElementById("svelte-czc51x-style")) add_css$1();
-		init(this, options, instance$1, create_fragment$1, safe_not_equal, {});
+		init(this, options, instance, create_fragment, safe_not_equal, {}, add_css);
 	}
 }
 

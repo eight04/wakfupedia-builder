@@ -4,9 +4,8 @@
   "description": "A userscript that extends Wakfu Encyclopedia with a simple builder.",
   "author": "eight04 <eight04@gmail.com>",
   "license": "MIT",
-  "dependencies": {},
   "scripts": {
-    "test": "eslint \"**/*.js\" --cache",
+    "test": "eslint . --cache --ext .js,.mjs,.svelte",
     "preversion": "npm test",
     "version": "npm run build && git add .",
     "build": "rollup -c",
@@ -16,11 +15,12 @@
     "dist"
   ],
   "devDependencies": {
-    "eslint": "^5.16.0",
-    "rollup": "^1.32.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-svelte": "^5.1.1",
-    "svelte": "^3.19.1",
+    "@rollup/plugin-node-resolve": "^13.2.1",
+    "eslint": "^8.14.0",
+    "eslint-plugin-svelte3": "^3.4.1",
+    "rollup": "^2.70.2",
+    "rollup-plugin-svelte": "^7.1.0",
+    "svelte": "^3.47.0",
     "userscript-meta-cli": "^0.4.2"
   },
   "repository": "eight04/wakfupedia-builder",
