@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name Wakfupedia Builder
-// @version 0.3.0
+// @version 0.3.1
 // @description A userscript that extends Wakfu Encyclopedia with a simple builder.
 // @license MIT
 // @author eight04 <eight04@gmail.com>
@@ -778,7 +778,7 @@ function create_each_block_1(ctx) {
 			t1 = text(t1_value);
 			t2 = space();
 			button = element("button");
-			button.textContent = "✗\r\n        ";
+			button.textContent = "✗\n        ";
 			if (!src_url_equal(img.src, img_src_value = /*item*/ ctx[22].icon)) attr(img, "src", img_src_value);
 			attr(img, "alt", "");
 			attr(img, "class", "svelte-4orkm9");
