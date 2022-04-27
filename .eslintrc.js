@@ -1,4 +1,4 @@
-{
+module.exports = {
 	"env": {
 		"es6": true,
 		"node": true
@@ -14,5 +14,14 @@
   "parserOptions": {
     "sourceType": "module",
     "ecmaVersion": 2019
-  }
-}
+  },
+  plugins: [
+    'svelte3'
+  ],
+  overrides: [
+    {
+      files: ['*.svelte'],
+      processor: 'svelte3/svelte3'
+    }
+  ],
+};

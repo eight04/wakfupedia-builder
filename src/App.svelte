@@ -1,4 +1,5 @@
 <script>
+/* eslint-env greasemonkey, browser */
 import {afterUpdate} from "svelte";
 
 import {itemList, summary, buildSetIssue} from "./items.js";
@@ -38,7 +39,7 @@ const selectActions = {
       await itemList.add(item);
     }
   }
-}
+};
 
 async function updateSelectedSet() {
   const action = selectActions[setSelectEl.value];
